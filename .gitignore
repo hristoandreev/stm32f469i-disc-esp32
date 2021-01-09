@@ -1,0 +1,74 @@
+# Hidden objects, .gitignore itself excluded
+!/.gitignore
+.idea/
+*/.idea/
+
+# Output directory
+build/
+*/build/
+clion_build/
+cmake-build*/
+
+# Old files
+*.old
+
+# Files from Icho should not be included in my repo
+*.icho.*
+
+# Do not include archives
+*.tar
+*.tar.*
+*.zip
+*.rar
+*.7z
+
+# Do not include backup files
+*.bak
+*.back
+
+
+# *.orig are used to store original file contents - sort of backup, so no need to include them in git
+*.orig
+
+# Object files
+*.o
+*.ko
+*.obj
+
+# Dependency files
+*.d
+
+# vim swap files
+*.swp
+
+# Various output files
+*.map
+*.lst
+*.list
+*.dmp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+*.elf
+*.bin
