@@ -14,7 +14,8 @@
         "Height": 480
       }
     ],
-    "PostGenerateTargetCommand" : "touchgfx update_project --project-file=../STM32F469I-DISCO.ioc --platform=m4"
+    "PostGenerateTargetCommand" : "touchgfx update_project --project-file=../STM32F469I-DISCO.ioc --platform=m4",
+    "Family" : "STM32F4"
   },
-  "Version": "4.13.0"
+  "Version": "4.16.0"
 }

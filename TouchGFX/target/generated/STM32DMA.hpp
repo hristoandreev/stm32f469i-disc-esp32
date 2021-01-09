@@ -4,7 +4,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -18,6 +18,7 @@
 #ifndef STM32F4DMA_HPP
 #define STM32F4DMA_HPP
 
+#include <touchgfx/Bitmap.hpp>
 #include <touchgfx/hal/DMA.hpp>
 
 /**
@@ -37,6 +38,7 @@ class STM32F4DMA : public touchgfx::DMA_Interface
      Defines an alias representing the base.
      */
     typedef touchgfx::DMA_Interface Base;
+
 public:
     /**
      * @fn STM32F4DMA::STM32F4DMA();
@@ -55,6 +57,21 @@ public:
      *        Destructor.
      */
     virtual ~STM32F4DMA();
+
+    /**
+     * @fn DMAType touchgfx::STM32F4DMA::getDMAType()
+     *
+     * @brief Function for obtaining the DMA type of the concrete DMA_Interface implementation.
+     *
+     *        Function for obtaining the DMA type of the concrete DMA_Interface implementation.
+     *        As default, will return DMA_TYPE_CHROMART type value.
+     *
+     * @return a DMAType value of the concrete DMA_Interface implementation.
+     */
+    virtual touchgfx::DMAType getDMAType(void)
+    {
+        return touchgfx::DMA_TYPE_CHROMART;
+    }
 
     /**
      * @fn touchgfx::BlitOperations STM32F4DMA::getBlitCaps();
@@ -117,9 +134,31 @@ protected:
 
 private:
     touchgfx::LockFreeDMA_Queue dma_queue;
-    touchgfx::BlitOp            queue_storage[96];
+    touchgfx::BlitOp queue_storage[96];
+
+    /**
+     * @fn void STM32F4DMA::getChromARTInputFormat()
+     *
+     * @brief Convert Bitmap format to ChromART Input format.
+     *
+     * @param format Bitmap format.
+     *
+     * @return ChromART Input format.
+     */
+
+    inline uint32_t getChromARTInputFormat(touchgfx::Bitmap::BitmapFormat format);
+
+    /**
+     * @fn void STM32F4DMA::getChromARTOutputFormat()
+     *
+     * @brief Convert Bitmap format to ChromART Output format.
+     *
+     * @param format Bitmap format.
+     *
+     * @return ChromART Output format.
+     */
+    inline uint32_t getChromARTOutputFormat(touchgfx::Bitmap::BitmapFormat format);
 };
 
 #endif // STM32F4DMA_HPP
-
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

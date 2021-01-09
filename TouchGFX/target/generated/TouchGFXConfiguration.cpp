@@ -4,7 +4,7 @@
 ******************************************************************************
 * @attention
 *
-* <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+* <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
 * All rights reserved.</center></h2>
 *
 * This software component is licensed by ST under Ultimate Liberty license
@@ -43,8 +43,14 @@ void touchgfx_init()
   FontManager::setFontProvider(&fontProvider);
 
   FrontendHeap& heap = FrontendHeap::getInstance();
-  (void)heap; // we need to obtain the reference above to initialize the frontend heap.
+  /*
+   * we need to obtain the reference above to initialize the frontend heap.
+   */
+  (void)heap;
 
+  /*
+   * Initialize TouchGFX
+   */
   hal.initialize();
 }
 
