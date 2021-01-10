@@ -20,6 +20,6 @@ script:
   - cd ..
   - mkdir build
   - cd build
-  - cmake /home/travis/build/hristoandreev/stm32f469i-disc-esp32
+  - $HOME/cmake/bin/cmake /home/travis/build/hristoandreev/stm32f469i-disc-esp32
   - make -j10
 after_failure:
