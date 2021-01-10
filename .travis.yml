@@ -1,0 +1,22 @@
+sudo: required
+dist: trusty
+language: c++
+compiler:
+  - arm-none-eabi-gcc
+  - arm-none-eabi-g++
+cache:
+  directories:
+    - "${HOME}/persist"
+
+before_script:
+# Extra gcc versions
+  # For teensy build
+  - sudo apt-get install gcc-arm-none-eabi
+  - sudo apt-get install cmake
+script:
+  - cd ..
+  - mkdir build
+  - cd build
+  - cmake /home/travis/build/hristoandreev/stm32f469i-disc-esp32
+  - make -j10
+after_failure:
