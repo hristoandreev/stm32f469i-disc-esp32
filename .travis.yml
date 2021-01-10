@@ -12,7 +12,10 @@ before_script:
 # Extra gcc versions
   # For teensy build
   - sudo apt-get install binutils-arm-none-eabi
-  - sudo apt-get install cmake
+  - wget https://cmake.org/files/v3.19/cmake-3.19.2.tar.gz
+  - mkdir $HOME/cmake;
+  - tar -xf cmake-3.17.0-hfb1cb51_0.tar.bz2 -C $HOME/cmake;
+  - export PATH=$HOME/cmake/bin:$PATH;
 script:
   - cd ..
   - mkdir build
