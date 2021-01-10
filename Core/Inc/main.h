@@ -62,6 +62,8 @@ void Error_Handler(void);
 #define RENDER_TIME_GPIO_Port GPIOD
 #define VSYNC_FREQ_Pin GPIO_PIN_6
 #define VSYNC_FREQ_GPIO_Port GPIOG
+#define ESP32_RESET_Pin GPIO_PIN_13
+#define ESP32_RESET_GPIO_Port GPIOB
 #define SDCARD_DETECT_Pin GPIO_PIN_2
 #define SDCARD_DETECT_GPIO_Port GPIOG
 /* USER CODE BEGIN Private defines */
