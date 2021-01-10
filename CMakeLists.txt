@@ -1,5 +1,5 @@
 #THIS FILE IS AUTO GENERATED FROM THE TEMPLATE! DO NOT CHANGE!
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.17)
 
 set(PROJECT_NAME stm32f469i-disc-esp32)
 
