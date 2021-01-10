@@ -1,0 +1,29 @@
+sudo: required
+dist: trusty
+language: c++
+compiler:
+  - arm-none-eabi-gcc
+  - arm-none-eabi-g++
+cache:
+  directories:
+    - "${HOME}/persist"
+
+before_script:
+# Extra gcc versions
+  # For teensy build
+  - sudo apt-get install binutils-arm-none-eabi
+  - version=3.19
+  - build=1
+  - mkdir ~/temp
+  - cd ~/temp
+  - wget https://cmake.org/files/v$version/cmake-$version.$build-Linux-x86_64.sh 
+  - sudo mkdir /opt/cmake
+  - sudo sh cmake-$version.$build-Linux-x86_64.sh --prefix=/opt/cmake
+  - sudo ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake
+script:
+  - cd ..
+  - mkdir build
+  - cd build
+  - cmake /home/travis/build/hristoandreev/stm32f469i-disc-esp32
+  - make -j10
+after_failure:
