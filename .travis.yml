@@ -11,7 +11,7 @@ cache:
 before_script:
 # Extra gcc versions
   # For teensy build
-  - sudo apt-get install gcc-arm-none-eabi
+  - sudo apt-get install binutils-arm-none-eabi
   - sudo apt-get install cmake
 script:
   - cd ..
