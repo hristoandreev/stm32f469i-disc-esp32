@@ -62,6 +62,8 @@ void Error_Handler(void);
 #define RENDER_TIME_GPIO_Port GPIOD
 #define VSYNC_FREQ_Pin GPIO_PIN_6
 #define VSYNC_FREQ_GPIO_Port GPIOG
+#define SDCARD_DETECT_Pin GPIO_PIN_2
+#define SDCARD_DETECT_GPIO_Port GPIOG
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
