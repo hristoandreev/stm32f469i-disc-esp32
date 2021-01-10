@@ -21,6 +21,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "fatfs.h"
+#include "lwip.h"
 #include "app_touchgfx.h"
 #include "usb_device.h"
 
@@ -29,6 +30,9 @@
 #include "../Components/otm8009a/otm8009a.h"
 #include "stm32469i_discovery_sdram.h"
 #include "stm32469i_discovery_qspi.h"
+#include "pppd.h"
+#include "https_client_task.h"
+#include "web.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,9 +64,13 @@ LTDC_HandleTypeDef hltdc;
 
 QSPI_HandleTypeDef hqspi;
 
+RNG_HandleTypeDef hrng;
+
 SD_HandleTypeDef hsd;
 DMA_HandleTypeDef hdma_sdio_rx;
 DMA_HandleTypeDef hdma_sdio_tx;
+
+UART_HandleTypeDef huart6;
 
 SDRAM_HandleTypeDef hsdram1;
 
@@ -72,6 +80,37 @@ const osThreadAttr_t TouchGFXTask_attributes = {
   .name = "TouchGFXTask",
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 2048 * 4
+};
+/* Definitions for HTTPSClientTask */
+osThreadId_t HTTPSClientTaskHandle;
+const osThreadAttr_t HTTPSClientTask_attributes = {
+  .name = "HTTPSClientTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 5120 * 4
+};
+/* Definitions for PPPoSTask */
+osThreadId_t PPPoSTaskHandle;
+const osThreadAttr_t PPPoSTask_attributes = {
+  .name = "PPPoSTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 1024 * 4
+};
+/* Definitions for HTTPSClientTest */
+osThreadId_t HTTPSClientTestHandle;
+const osThreadAttr_t HTTPSClientTest_attributes = {
+  .name = "HTTPSClientTest",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 1024 * 4
+};
+/* Definitions for web_queue_request */
+osMessageQueueId_t web_queue_requestHandle;
+const osMessageQueueAttr_t web_queue_request_attributes = {
+  .name = "web_queue_request"
+};
+/* Definitions for web_queue_response */
+osMessageQueueId_t web_queue_responseHandle;
+const osMessageQueueAttr_t web_queue_response_attributes = {
+  .name = "web_queue_response"
 };
 /* USER CODE BEGIN PV */
 
@@ -89,7 +128,12 @@ static void MX_LTDC_Init(void);
 static void MX_QUADSPI_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_SDIO_SD_Init(void);
+static void MX_USART6_UART_Init(void);
+static void MX_RNG_Init(void);
 void TouchGFX_Task(void *argument);
+void HTTPSClient_Task(void *argument);
+void PPPoS_Task(void *argument);
+void HTTPSClientTest_Task(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -97,7 +141,10 @@ void TouchGFX_Task(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+__attribute__ ((used))
+static volatile int uxTopUsedPriority;
 
+extern void initialise_monitor_handles();
 /* USER CODE END 0 */
 
 /**
@@ -107,7 +154,8 @@ void TouchGFX_Task(void *argument);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+    uxTopUsedPriority = configMAX_PRIORITIES - 1;
+    initialise_monitor_handles();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -138,10 +186,14 @@ int main(void)
   MX_I2C1_Init();
   MX_SDIO_SD_Init();
   MX_FATFS_Init();
+  MX_USART6_UART_Init();
+  MX_RNG_Init();
   MX_TouchGFX_Init();
   /* USER CODE BEGIN 2 */
+
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -159,6 +211,13 @@ int main(void)
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* creation of web_queue_request */
+  web_queue_requestHandle = osMessageQueueNew (5, sizeof(struct web_pkg), &web_queue_request_attributes);
+
+  /* creation of web_queue_response */
+  web_queue_responseHandle = osMessageQueueNew (5, sizeof(uint16_t), &web_queue_response_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -166,6 +225,15 @@ int main(void)
   /* Create the thread(s) */
   /* creation of TouchGFXTask */
   TouchGFXTaskHandle = osThreadNew(TouchGFX_Task, NULL, &TouchGFXTask_attributes);
+
+  /* creation of HTTPSClientTask */
+  HTTPSClientTaskHandle = osThreadNew(HTTPSClient_Task, NULL, &HTTPSClientTask_attributes);
+
+  /* creation of PPPoSTask */
+  PPPoSTaskHandle = osThreadNew(PPPoS_Task, NULL, &PPPoSTask_attributes);
+
+  /* creation of HTTPSClientTest */
+  HTTPSClientTestHandle = osThreadNew(HTTPSClientTest_Task, NULL, &HTTPSClientTest_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -588,6 +656,32 @@ static void MX_QUADSPI_Init(void)
 }
 
 /**
+  * @brief RNG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RNG_Init(void)
+{
+
+  /* USER CODE BEGIN RNG_Init 0 */
+
+  /* USER CODE END RNG_Init 0 */
+
+  /* USER CODE BEGIN RNG_Init 1 */
+
+  /* USER CODE END RNG_Init 1 */
+  hrng.Instance = RNG;
+  if (HAL_RNG_Init(&hrng) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RNG_Init 2 */
+
+  /* USER CODE END RNG_Init 2 */
+
+}
+
+/**
   * @brief SDIO Initialization Function
   * @param None
   * @retval None
@@ -612,6 +706,39 @@ static void MX_SDIO_SD_Init(void)
   /* USER CODE BEGIN SDIO_Init 2 */
 
   /* USER CODE END SDIO_Init 2 */
+
+}
+
+/**
+  * @brief USART6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART6_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART6_Init 0 */
+
+  /* USER CODE END USART6_Init 0 */
+
+  /* USER CODE BEGIN USART6_Init 1 */
+
+  /* USER CODE END USART6_Init 1 */
+  huart6.Instance = USART6;
+  huart6.Init.BaudRate = 921600;
+  huart6.Init.WordLength = UART_WORDLENGTH_8B;
+  huart6.Init.StopBits = UART_STOPBITS_1;
+  huart6.Init.Parity = UART_PARITY_NONE;
+  huart6.Init.Mode = UART_MODE_TX_RX;
+  huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart6.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART6_Init 2 */
+
+  /* USER CODE END USART6_Init 2 */
 
 }
 
@@ -695,10 +822,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOG_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOG_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOI_CLK_ENABLE();
@@ -715,6 +842,9 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(VSYNC_FREQ_GPIO_Port, VSYNC_FREQ_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(ESP32_RESET_GPIO_Port, ESP32_RESET_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOH, GPIO_PIN_7, GPIO_PIN_RESET);
@@ -739,6 +869,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(VSYNC_FREQ_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : ESP32_RESET_Pin */
+  GPIO_InitStruct.Pin = ESP32_RESET_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(ESP32_RESET_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SDCARD_DETECT_Pin */
   GPIO_InitStruct.Pin = SDCARD_DETECT_Pin;
@@ -770,6 +907,9 @@ __weak void TouchGFX_Task(void *argument)
 {
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
+
+  /* init code for LWIP */
+  MX_LWIP_Init();
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)
@@ -777,6 +917,84 @@ __weak void TouchGFX_Task(void *argument)
     osDelay(1);
   }
   /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_HTTPSClient_Task */
+/**
+* @brief Function implementing the HTTPSClientTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_HTTPSClient_Task */
+__weak void HTTPSClient_Task(void *argument)
+{
+  /* USER CODE BEGIN HTTPSClient_Task */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END HTTPSClient_Task */
+}
+
+/* USER CODE BEGIN Header_PPPoS_Task */
+/**
+* @brief Function implementing the PPPoSTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_PPPoS_Task */
+__weak void PPPoS_Task(void *argument)
+{
+  /* USER CODE BEGIN PPPoS_Task */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END PPPoS_Task */
+}
+
+/* USER CODE BEGIN Header_HTTPSClientTest_Task */
+/**
+* @brief Function implementing the HTTPSClientTest thread.
+* @param argument: Not used
+* @retval None
+*/
+char in_buff[4096];
+/* USER CODE END Header_HTTPSClientTest_Task */
+__weak void HTTPSClientTest_Task(void *argument)
+{
+  /* USER CODE BEGIN HTTPSClientTest_Task */
+//    osStatus_t res;
+    httpsClientState state;
+    struct web_pkg web;
+
+    /* wait until to connected pppos. */
+    do {
+        (void) osMessageQueueGet(web_queue_responseHandle, &state, (uint8_t *) 24, osWaitForever);
+    }while(state != httpc_READY);
+
+    while(1) {
+        web.uri = "http://192.168.3.1/wifi?cmd=scan";
+        web.type = GET;
+        web.in_buff = in_buff;
+        web.in_buff_size = sizeof(in_buff);
+        web.out_buff = NULL;
+        web.out_buff_size = 0;
+        (void)osMessageQueuePut(web_queue_requestHandle, &web, 24, 1000);
+        printf("HTTPS Request: %s\n", web.uri);
+        osMessageQueueGet(web_queue_responseHandle, &state, NULL, osWaitForever);
+        if (state == httpc_OK)
+            printf("HTTPS Response: %s\n", in_buff);
+        else
+            printf("HTTPS Response: %s\n", "ERROR!");
+        /* Infinite loop */
+        for (;;) {
+            osDelay(100);
+        }
+    }
+  /* USER CODE END HTTPSClientTest_Task */
 }
 
  /**
