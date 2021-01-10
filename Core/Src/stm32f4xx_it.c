@@ -92,7 +92,7 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-  static volatile loop = 1;
+  static volatile int loop = 1;
   while(loop) {
 
   }
