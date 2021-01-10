@@ -129,16 +129,16 @@ endforeach(TMP_PATH)
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/gcc/${Script})
 
 add_link_options(-Wl,-gc-sections,--print-memory-usage,-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map)
-add_link_options(-mcpu=cortex-m4 -mthumb -static --specs=nano.specs --specs=nosys.specs --specs=rdimon.specs)
-#add_link_options(-mcpu=cortex-m4 -mthumb -static --specs=nano.specs --specs=nosys.specs)
+#add_link_options(-mcpu=cortex-m4 -mthumb -static --specs=nano.specs --specs=nosys.specs --specs=rdimon.specs)
+add_link_options(-mcpu=cortex-m4 -mthumb -static --specs=nano.specs --specs=nosys.specs)
 add_link_options(-T ${LINKER_SCRIPT})
 
 add_executable(${PROJECT_NAME}.elf ${SOURCES} ${LINKER_SCRIPT})
 
 target_link_libraries(${PROJECT_NAME}.elf -L${CMAKE_SOURCE_DIR}/Middlewares/ST/touchgfx/lib/core/cortex_m4f/gcc)
 target_link_libraries(${PROJECT_NAME}.elf -ltouchgfx-float-abi-hard)
-target_link_libraries(${PROJECT_NAME}.elf -Wl,--start-group -lc -lrdimon -lm -lstdc++ -lsupc++ -Wl,--end-group)
-#target_link_libraries(${PROJECT_NAME}.elf -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group)
+#target_link_libraries(${PROJECT_NAME}.elf -Wl,--start-group -lc -lrdimon -lm -lstdc++ -lsupc++ -Wl,--end-group)
+target_link_libraries(${PROJECT_NAME}.elf -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group)
 
 set(HEX_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.hex)
 set(BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.bin)
