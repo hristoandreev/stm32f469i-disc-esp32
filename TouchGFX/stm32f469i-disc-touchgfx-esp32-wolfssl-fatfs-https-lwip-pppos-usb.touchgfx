@@ -74,7 +74,8 @@
     "LandscapeSkinY": 0,
     "PortraitSkinX": 0,
     "PortraitSkinY": 0,
-    "DisplayOrientation": "Landscape"
+    "DisplayOrientation": "Landscape",
+    "Family": "STM32F4"
   },
   "Version": "4.16.0",
   "CreatedBy": "4.16.0"
